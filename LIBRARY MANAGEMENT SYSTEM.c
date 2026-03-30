@@ -1,9 +1,12 @@
+/*
+ * Library Management System
+ * Made by Adrish Datta
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
-int count = 0;
 
 //-----------------------FUNCTION PROTOTYPES-------------------------
 int menu();
@@ -15,21 +18,11 @@ void search();
 void change();
 
 //---------------------MINI--FUNCTION PROTOTYPES------------------
-int reuse_search(char search[100], int **indexptr);
+
 int reuse_lower_cmp(char search[], char txt[]);
 int reuse_lower_str(char search[], char txt[]);
 
 //---------------------------------------------------------------------------------------
-struct books
-{
-	char book_scode[100];
-	char book_name[100];
-	char book_author[100];
-	int book_issued;
-	float book_price;
-}; // struct books
-
-struct books b;
 
 //-------------------------------------MAIN-----------------------------------------
 int main()
@@ -38,6 +31,7 @@ int main()
 
 	do
 	{
+		printf("-------------------------------------Library Management System by Adrish Datta-------------------------------------\n");
 		int op = menu();
 
 		if (op == 1)
@@ -68,22 +62,30 @@ int main()
 
 int menu()
 {
-	system("cls"); //clears the screen
+	system("cls");
+	printf("-------------------Library Management System by Adrish Datta--------------------\n\n");
 	int op;
-	printf("------------------------------MAIN MENU----------------------------\n\n");
+	printf("-------------------------------------MAIN MENU--------------------------------\n\n");
 	printf("1.ADD BOOKS\n2.ISSUE BOOK\n3.RETURN BOOK\n4.SHOW BOOKS\n5.SEARCH BAR\n6.CHANGE DATA\n7.EXIT\n");
 	do
 	{
 		printf("Enter an option: ");
-		scanf("%d", &op);
-	} while (op < 1 || op > 7); // do-while
+		if (scanf("%d", &op) != 1)
+		{ // non-numeric input check
+			op = 0;
+			while (getchar() != '\n')
+				; // flush bad input
+		}
+	} while (op < 1 || op > 7);
 	if (op != 7)
-		system("cls"); //clears the screen
+		system("cls");
 	return op;
-} // menu
+}
 
 void add_book()
 {
+	char book_name[100], book_author[100], book_scode[100], book_issued[50];
+	float book_price;
 	FILE *ptr;
 	ptr = fopen("/sdcard/books.txt", "a");
 	int n;
@@ -92,258 +94,308 @@ void add_book()
 	scanf("%d", &n);
 	getchar(); // consume leftover newline
 
-	for (int i = count; i < count + n; i++)
+	for (int i = 0; i < n; i++)
 	{
 		printf("\nENTER THE BOOK'S NAME: ");
-		fgets(b.book_name, 100, stdin);
-		b.book_name[strcspn(b.book_name, "\n")] = 0; // remove newline
+		fgets(book_name, 100, stdin);
+		book_name[strcspn(book_name, "\n")] = 0; // remove newline
 
 		printf("ENTER THE BOOK'S AUTHOR: ");
-		fgets(b.book_author, 100, stdin);
-		b.book_author[strcspn(b.book_author, "\n")] = 0; // remove newline
+		fgets(book_author, 100, stdin);
+		book_author[strcspn(book_author, "\n")] = 0; // remove newline
 
-			printf("ENTER THE BOOK'S ISBN: ");
-			fgets(b.book_scode, 100, stdin);
-			b.book_scode[strcspn(b.book_scode, "\n")] = 0;
-		}
+		printf("ENTER THE BOOK'S ISBN: ");
+		fgets(book_scode, 100, stdin);
+		book_scode[strcspn(book_scode, "\n")] = 0;
 
 		printf("ENTER THE BOOK'S PRICE: ");
-		scanf("%f", &b.book_price);
+		scanf("%f", &book_price);
 		getchar(); // consume leftover newline
 
-		b.book_issued = 0;
+		strcpy(book_issued, "available");
 
-		fprintf(ptr,"%s|%s|%s|RS. %.2f|%s\n",
-				b.book_name,
-				b.book_author,
-				b.book_scode,
-				b.book_price,
-				
-				b.book_issued == 0 ? "available" : "issued");
+		fprintf(ptr, "%s|%s|%s|%.2f|%s\n", book_name, book_author, book_scode, book_price, book_issued);
 	} // for
-	count += n;
+
 	fclose(ptr);
 } // add_book
 
 void issue_book()
 {
 	printf("------------------------------ISSUE BOOKS----------------------------\n\n");
-	char code[50];
+	char book_name[100], book_author[100], book_scode[20], book_price[25], book_issued[15], code[20];
 	int found = 0;
-
-	if (count == 0)
+	FILE *ptr, *tptr;
+	ptr = fopen("/sdcard/books.txt", "r");
+	if (ptr == NULL)
 	{
-		printf("\nNo books in the System\n");
+		printf("FILE NOT FOUND!!");
+		return;
 	}
-	else
-	{
-		printf("%-15s %-15s %-15s %-10s\n", "Book's Name", "Book's Author", "ISBN", "Price");
+	rewind(ptr);
+	printf("%-15s %-15s %-11s %-10s\n", "Book's Name", "Book's Author", "ISBN", "Price");
 
-		for (int i = 0; i < count; i++)
+	while (fscanf(ptr, " %[^|]|%[^|]|%[^|]|%[^|]|%[^\n]", book_name, book_author, book_scode, book_price, book_issued) == 5)
+	{
+		if (strcmp(book_issued, "issued") == 0)
 		{
-			if (b[i].book_issued == 1)
-				continue;
-			printf("------------------------------------------------------------------\n");
-			printf("%-15s %-15s %-10s RS. %-10.2f\n",
-				   b[i].book_name,
-				   b[i].book_author,
-				   b[i].book_scode,
-				   b[i].book_price);
+			continue;
 		}
 		printf("------------------------------------------------------------------\n");
+		printf("%-15s %-15s %-10s RS.%-10s\n",
+			   book_name,
+			   book_author,
+			   book_scode,
+			   book_price);
+	}
+	printf("------------------------------------------------------------------\n");
 
-		printf("Choose any book from the following:\n");
-		printf("Enter the book's ISBN: ");
-		fgets(code, 50, stdin);
-		code[strcspn(code, "\n")] = 0;
+	printf("Choose any book from the following:\n\n");
+	getchar();
+	printf("Enter the book's ISBN: ");
+	fgets(code, 50, stdin);
+	code[strcspn(code, "\n")] = 0;
+	rewind(ptr);
 
-		for (int i = 0; i < count; i++)
+	tptr = fopen("/sdcard/temp.txt", "w");
+	if (tptr == NULL)
+	{
+		printf("FILE NOT FOUND!!");
+		return;
+	}
+	while (fscanf(ptr, " %[^|]|%[^|]|%[^|]|%[^|]|%[^\n]", book_name, book_author, book_scode, book_price, book_issued) == 5)
+	{
+		if (reuse_lower_cmp(code, book_scode) == 0)
 		{
-			if (reuse_lower_cmp(code, b[i].book_scode) == 0)
+			if (strcmp(book_issued, "available") == 0)
 			{
-				if (b[i].book_issued == 0)
-				{
-					printf("\nBook issued successfully\n");
-					b[i].book_issued = 1;
-					found = 1;
-				}
-				else
-				{
-					printf("\nThe book is already issued!\n");
-					found = 1;
-				}
-				break;
+				strcpy(book_issued, "issued");
+				fprintf(tptr, "%s|%s|%s|%s|%s\n", book_name, book_author, book_scode, book_price, book_issued);
+				printf("\nBook issued successfully");
 			}
+			else
+			{
+				fprintf(tptr, "%s|%s|%s|%s|%s\n", book_name, book_author, book_scode, book_price, book_issued);
+				printf("\nThe book is already issued!\n");
+			}
+			found = 1;
 		}
-
-		if (found == 0)
-			printf("\nThe book couldn't be found!\n");
+		else
+		{
+			fprintf(tptr, "%s|%s|%s|%s|%s\n", book_name, book_author, book_scode, book_price, book_issued);
+		}
+	}
+	fclose(tptr);
+	fclose(ptr);
+	remove("/sdcard/books.txt");
+	rename("/sdcard/temp.txt", "/sdcard/books.txt");
+	if (found == 0)
+	{
+		printf("\nThe book couldn't be found!\n");
 	}
 } // issue_book
 
 void return_book()
 {
 	printf("----------------------------RETURN BOOKS--------------------------\n\n");
-	char code[100];
+	char book_name[100], book_author[100], book_scode[20], book_price[25], book_issued[15], code[20];
 	int found = 0,
 	try
 		= 0;
-
-	if (count == 0)
+	FILE *ptr, *tptr;
+	ptr = fopen("/sdcard/books.txt", "r");
+	if (ptr == NULL)
 	{
-		printf("\nNo books in the System\n");
+		printf("FILE NOT FOUND!!");
+		return;
 	}
-	else
-	{
-		do
-		{
-			found = 0;
-			printf("Enter the Book's ISBN: ");
-			fgets(code, 100, stdin);
-			code[strcspn(code, "\n")] = 0;
+	rewind(ptr);
+	printf("%-15s %-15s %-11s %-10s\n", "Book's Name", "Book's Author", "ISBN", "Price");
 
-			for (int i = 0; i < count; i++)
+	while (fscanf(ptr, " %[^|]|%[^|]|%[^|]|%[^|]|%[^\n]", book_name, book_author, book_scode, book_price, book_issued) == 5)
+	{
+		if (strcmp(book_issued, "available") == 0)
+		{
+			continue;
+		}
+		printf("------------------------------------------------------------------\n");
+		printf("%-15s %-15s %-10s RS.%-10s\n", book_name, book_author, book_scode, book_price);
+	}
+	printf("------------------------------------------------------------------\n");
+
+	getchar();
+	do
+	{
+		tptr = fopen("/sdcard/temp.txt", "w");
+		if (tptr == NULL)
+		{
+			printf("FILE NOT FOUND!!");
+			return;
+		}
+		rewind(ptr);
+		found = 0;
+		printf("Enter the Book's ISBN: ");
+		fgets(code, 100, stdin);
+		code[strcspn(code, "\n")] = 0;
+
+		while (fscanf(ptr, " %[^|]|%[^|]|%[^|]|%[^|]|%[^\n]", book_name, book_author, book_scode, book_price, book_issued) == 5)
+		{
+			if (strcmp(book_scode, code) == 0)
 			{
-				if (strcmp(b[i].book_scode, code) == 0)
+				if (strcmp(book_issued, "issued") == 0)
 				{
-					if (b[i].book_issued == 1)
-					{
-						printf("\nBook returned successfully\n");
-						b[i].book_issued = 0;
-						found = 1;
-						break;
-					}
-					else
-					{
-						printf("\nThe book isn't issued... wrong ISBN entered!\n");
-						found = 1;
-					}
-					break;
+					printf("\nBook returned successfully\n");
+					strcpy(book_issued, "available");
+					found = 1;
+				}
+				else
+				{
+					printf("\nThe book isn't issued... wrong ISBN entered!\n");
+					found = 1;
 				}
 			}
-
-			if (found == 0)
-			{
-				printf("Invalid ISBN Entered!!\nWant to try again?\n1.YES\n2.NO\nEnter an option: ");
-				scanf("%d", &try);
-				getchar(); // consume leftover newline
-			}
-		} while (try == 1);
-	}
+			fprintf(tptr, "%s|%s|%s|%s|%s\n", book_name, book_author, book_scode, book_price, book_issued);
+		} //while
+		if (found == 0)
+		{
+			printf("Invalid ISBN Entered!!\nWant to try again?\n1.YES\n2.NO\nEnter an option: ");
+			scanf("%d", &try);
+			getchar(); // consume leftover newline
+		}
+	} while (try == 1);
+	fclose(tptr);
+	fclose(ptr);
+	remove("/sdcard/books.txt");
+	rename("/sdcard/temp.txt", "/sdcard/books.txt");
 } // return_book
 
 void show_books()
 {
-	printf("------------------------------BOOKS ----------------------------\n\n");
-	if (count == 0)
+	char book_name[100], book_author[100], book_scode[50], book_price[25], book_issued[15];
+	FILE *ptr;
+	ptr = fopen("/sdcard/books.txt", "r");
+	if (ptr == NULL)
 	{
-		printf("NO BOOKS AVAILABLE\n");
+		printf("FILE NOT FOUND!!");
+		return;
 	}
-	else
+	printf("------------------------------SHOW BOOKS ----------------------------\n\n");
+	printf("%-15s %-15s %-11s %-10s %-15s\n", "Book's Name", "Book's Author", "ISBN", "Price", "Status");
+	while (fscanf(ptr, " %[^|]|%[^|]|%[^|]|%[^|]|%[^\n]", book_name, book_author, book_scode, book_price, book_issued) == 5)
 	{
-		printf("%-15s %-15s %-11s %-10s %-15s\n", "Book's Name", "Book's Author", "Isbn", "Price", "Status");
-
-		for (int i = 0; i < count; i++)
-		{
-			printf("------------------------------------------------------------------\n");
-			printf("%-15s %-15s %-11s RS. %-10.2f %-15s\n",
-				   b[i].book_name,
-				   b[i].book_author,
-				   b[i].book_scode,
-				   b[i].book_price,
-				   b[i].book_issued == 0 ? "available" : "issued");
-		}
 		printf("------------------------------------------------------------------\n");
+
+		printf("%-15s %-15s %-11s RS.%-10s %-15s\n", book_name, book_author, book_scode, book_price, book_issued);
 	}
-} // show_books
+	printf("------------------------------------------------------------------\n");
+	fclose(ptr);
+} // show_book
 
 void search()
 {
-	if (count == 0)
+	FILE *ptr;
+	ptr = fopen("/sdcard/books.txt", "r");
+	if (ptr == NULL)
 	{
-		printf("\nNo books in the System\n");
+		printf("FILE NOT FOUND!!");
+		return;
 	}
-	else
+	char book_name[100], book_author[100], book_scode[50], price[25], issued[15];
+	char search[100];
+	int searchagain = 0, found = 0;
+	getchar();
+	do
 	{
-		char search[100];
-		int searchagain = 0, found = 0;
-		do
+		rewind(ptr);
+		found = 0;
+		printf("SEARCH BAR: ");
+		fgets(search, 100, stdin);
+		search[strcspn(search, "\n")] = 0;
+		while (fscanf(ptr, " %[^|]|%[^|]|%[^|]|%[^|]|%[^\n]",
+					  book_name,
+					  book_author,
+					  book_scode,
+					  price,
+					  issued) == 5)
+			if (reuse_lower_str(search, book_name) || reuse_lower_str(search, book_scode) || reuse_lower_str(search, book_author))
+			{
+				printf("BOOK FOUND WITH %s NAME BY AUTHOR %s WITH %s ISBN\n", book_name, book_author, book_scode);
+				found = 1;
+			}
+
+		if (found == 0)
 		{
-			found = 0;
-			printf("SEARCH BAR: ");
-			fgets(search, 100, stdin);
-			search[strcspn(search, "\n")] = 0;
-
-			for (int i = 0; i < count; i++)
-			{
-				if (reuse_lower_str(search, b[i].book_name) || reuse_lower_str(search, b[i].book_scode) || reuse_lower_str(b[i].book_author, search))
-				{
-					printf("BOOK FOUND WITH %s NAME BY AUTHOR %s WITH %s ISBN\n", b[i].book_name, b[i].book_author, b[i].book_scode);
-					found = 1;
-				}
-			}
-
-			if (found == 0)
-			{
-				printf("Book not found!!\nWant to search again?\n1.YES\n2.NO\nEnter an option: ");
-				scanf("%d", &searchagain);
-				getchar(); // consume leftover newline
-			}
-		} while (searchagain == 1);
-	}
+			printf("Book not found!!\nWant to search again?\n1.YES\n2.NO\nEnter an option: ");
+			scanf("%d", &searchagain);
+			getchar(); // consume leftover newline
+		}
+	} while (searchagain == 1);
+	fclose(ptr);
 } // search
-
 void change()
 {
 	printf("------------------------------EDIT DATA----------------------------\n\n");
-	int searchagain = 0, option = 0;
-	int index = 0, k = 0, choice, trya = 0;
-	float newprice;
-	int indexes[100];
-	char newname[100], search[100];
-	int *indexptr = &indexes[0];
+	char book_name[100], book_author[100], book_scode[50], book_price[25], book_issued[15], edit_name[100], edit_author[100], edit_scode[50], edit_price[25];
 
+	FILE *ptr, *tptr;
+	ptr = fopen("/sdcard/books.txt", "r");
+	if (ptr == NULL)
+	{
+		printf("FILE NOT FOUND!!");
+		return;
+	}
+	int searchagain = 0, option = 0, match_count = 0;
+	int choice;
+	float newprice;
+	char newname[100], search[100], matched_isbns[100][20], target_isbn[20];
+	getchar();
 	do
 	{
-		trya = 0;
-		k = 0;
+		match_count = 0;
+		rewind(ptr);
+		printf("Enter the Book's Name or Author or ISBN: ");
+		fgets(search, 100, stdin);
+		search[strcspn(search, "\n")] = 0;
 
-		if (count == 0)
+		while (fscanf(ptr, " %[^|]|%[^|]|%[^|]|%[^|]|%[^\n]", book_name, book_author, book_scode, book_price, book_issued) == 5)
 		{
-			printf("\nNo books in the System\n");
+			if (!reuse_lower_str(search, book_name) &&
+				!reuse_lower_str(search, book_author) &&
+				!reuse_lower_str(search, book_scode))
+			{
+				continue;
+			}
+			printf("------------------------------------------------------------------\n");
+			printf("%-15s %-15s %-10s RS.%-10s\n", book_name, book_author, book_scode, book_price);
+			strcpy(matched_isbns[match_count], book_scode);
+			match_count++;
+		}
+		printf("------------------------------------------------------------------\n");
+		if (match_count == 0)
+		{
+			printf("no books matched!!\nWant to search again?\n1.YES\n2.NO\nEnter an option: ");
+			scanf("%d", &searchagain);
+			getchar();
 		}
 		else
 		{
-			printf("Enter the Book's Name or Author or ISBN: ");
-			fgets(search, 100, stdin);
-			search[strcspn(search, "\n")] = 0;
-
-			k = reuse_search(search, &indexptr);
-			if (k > 1)
+			if (match_count > 1)
 			{
-				do
-				{
-					trya = 0;
-					printf("Enter which book to edit (1-%d): ", k);
-					scanf("%d", &choice);
-					getchar();
-					if (choice > k || choice < 1)
-						trya = 1;
-					else
-					{
-						trya = 0;
-						index = indexes[choice - 1];
-					}
-				} while (trya == 1);
+				printf("Enter which book to edit (1-%d): ", match_count);
+				scanf("%d", &choice);
+				getchar();
+				strcpy(target_isbn, matched_isbns[choice - 1]);
+				printf("\nEnter which field to edit:\n1.Edit Book Name\n2.Edit Author\n3.Edit ISBN\n4.Edit Price\nEnter an option: ");
+				scanf("%d", &option);
+				getchar();
 			}
 			else
 			{
-				index = indexes[0];
+				strcpy(target_isbn, matched_isbns[0]);
+				printf("Enter which field to edit:\n1.Edit Book Name\n2.Edit Author\n3.Edit ISBN\n4.Edit Price\nEnter an option: ");
+				scanf("%d", &option);
+				getchar();
 			}
-
-			printf("Enter which field to edit:\n1.Edit Book Name\n2.Edit Author\n3.Edit ISBN\n4.Edit Price\nEnter an option: ");
-			scanf("%d", &option);
-			getchar();
 
 			switch (option)
 			{
@@ -351,28 +403,28 @@ void change()
 				printf("Enter the correct Name: ");
 				fgets(newname, 100, stdin);
 				newname[strcspn(newname, "\n")] = 0;
-				strcpy(b[index].book_name, newname);
+				strcpy(book_name, newname);
 				printf("Name edited successfully!!\n");
 				break;
 			case 2:
 				printf("Enter the correct Author: ");
 				fgets(newname, 100, stdin);
 				newname[strcspn(newname, "\n")] = 0;
-				strcpy(b[index].book_author, newname);
+				strcpy(book_author, newname);
 				printf("Author Name edited successfully!!\n");
 				break;
 			case 3:
 				printf("Enter the correct Isbn: ");
 				fgets(newname, 100, stdin);
 				newname[strcspn(newname, "\n")] = 0;
-				strcpy(b[index].book_scode, newname);
+				strcpy(book_scode, newname);
 				printf("Serial Code edited successfully!!\n");
 				break;
 			case 4:
 				printf("Enter the correct Price: ");
 				scanf("%f", &newprice);
 				getchar();
-				b[index].book_price = newprice;
+				sprintf(book_price, "%.2f", newprice); //prints into a string
 				printf("Price edited successfully!!\n");
 				break;
 			default:
@@ -380,46 +432,52 @@ void change()
 				break;
 			} // switch
 
-			if (k == 0)
+			strcpy(edit_name, book_name);
+			strcpy(edit_author, book_author);
+			strcpy(edit_scode, book_scode);
+			strcpy(edit_price, book_price);
+
+			rewind(ptr);
+			tptr = fopen("/sdcard/temp.txt", "w");
+			if (tptr == NULL)
 			{
-				printf("No book found!\nWant to search again?\n1.YES\n2.NO\nEnter an option: ");
-				scanf("%d", &searchagain);
-				getchar();
+				printf("FILE NOT FOUND!!");
+				return;
 			}
+			while (fscanf(ptr, " %[^|]|%[^|]|%[^|]|%[^|]|%[^\n]", book_name, book_author, book_scode, book_price, book_issued) == 5)
+			{
+				if (reuse_lower_cmp(target_isbn, book_scode) == 0)
+				{
+					fprintf(tptr, "%s|%s|%s|%s|%s\n", edit_name, edit_author, edit_scode, edit_price, book_issued);
+				}
+				else
+					fprintf(tptr, "%s|%s|%s|%s|%s\n", book_name, book_author, book_scode, book_price, book_issued);
+			}
+			printf("\nWant to search again?\n1.YES\n2.NO\nEnter an option: ");
+			scanf("%d", &searchagain);
+			getchar();
+			fclose(tptr);
+			remove("/sdcard/books.txt");
+			rename("/sdcard/temp.txt", "/sdcard/books.txt");
 		}
 	} while (searchagain == 1);
+	fclose(ptr);
 } // change
-
 //---------------------------------------------------------------------------------------
 //-----------------------------------MINI-FUNCTION---------------------------
-
-int reuse_search(char search[100], int **indexptr)
-{
-	int k = 0;
-	for (int i = 0; i < count; i++)
-	{
-		if (strstr(b[i].book_name, search) || strstr(b[i].book_scode, search) || strstr(b[i].book_author, search))
-		{
-			printf("----------------------------------------------------------------------\n");
-			printf("%-2d %-20s %-20s %-15s RS.%-5.2f\n", k + 1, b[i].book_name, b[i].book_author, b[i].book_scode, b[i].book_price);
-			**indexptr = i;
-			(*indexptr)++;
-			k++;
-		}
-	}
-	printf("-----------------------------------------------------------------------------\n");
-	return k;
-}
 
 int reuse_lower_cmp(char search[], char txt[])
 {
 	char a[100], btxt[100];
 	strcpy(a, search);
 	strcpy(btxt, txt);
+
 	for (int i = 0; a[i]; i++)
 		a[i] = tolower(a[i]);
+
 	for (int i = 0; btxt[i]; i++)
 		btxt[i] = tolower(btxt[i]);
+
 	if (strcmp(a, btxt) == 0)
 		return 0;
 	return 1;
@@ -430,11 +488,15 @@ int reuse_lower_str(char search[], char txt[])
 	char a[100], btxt[100];
 	strcpy(a, search);
 	strcpy(btxt, txt);
+
 	for (int i = 0; a[i]; i++)
 		a[i] = tolower(a[i]);
+
 	for (int i = 0; btxt[i]; i++)
 		btxt[i] = tolower(btxt[i]);
-	if (strstr(a, btxt))
+
+	if (strstr(btxt, a))
 		return 1;
-	return 0;
+	else
+		return 0;
 }

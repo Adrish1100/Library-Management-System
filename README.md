@@ -1,6 +1,6 @@
 # 📚 Library Management System
 
-> A console-based Library Management System written in **C** that allows users to manage books — add, issue, return, search, and edit — all through a clean interactive menu.
+> A console-based Library Management System written in **C** that allows users to manage books — add, issue, return, search, and edit — all through a clean interactive menu. All data is stored persistently using a fully file-based system.
 
 ---
 
@@ -10,16 +10,18 @@
 - [Features](#features)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
+- [⚠️ Precautions](#️-precautions)
 - [File Structure](#file-structure)
-- [Known Issues & Limitations](#known-issues--limitations)
-- [Future Improvements](#future-improvements)
+- [Future Plans](#future-plans)
 - [License](#license)
 
 ---
 
 ## 📖 About
 
-This project is a simple but functional **Library Management System** built in C. It stores book data persistently to a text file (`books.txt`) and provides an interactive terminal menu for library operations. It was designed as a learning project to practice file I/O, structs, and modular programming in C.
+This project is a **Library Management System** built in C. It stores book data persistently to a text file (`books.txt`) and provides an interactive terminal menu for all library operations. Every function reads and writes directly to the file — no in-memory arrays, fully file-based.
+
+Built and tested on **Android using CxxDroid**.
 
 ---
 
@@ -29,10 +31,10 @@ This project is a simple but functional **Library Management System** built in C
 |---|---|
 | ➕ Add Books | Add one or more books with name, author, ISBN, and price |
 | 📤 Issue Book | Mark a book as issued using its ISBN |
-| 📥 Return Book | Mark an issued book as returned |
+| 📥 Return Book | Mark an issued book as returned, with retry support |
 | 📋 Show Books | Display all books with their current availability status |
 | 🔍 Search | Search books by name, author, or ISBN (case-insensitive) |
-| ✏️ Edit Data | Update any field of an existing book record |
+| ✏️ Edit Data | Update any field of an existing book record, supports multiple matches |
 
 ---
 
@@ -41,7 +43,7 @@ This project is a simple but functional **Library Management System** built in C
 ### Prerequisites
 
 - A C compiler such as **GCC**
-- A Linux/macOS terminal, or **MinGW** on Windows
+- Linux/macOS terminal, **MinGW** on Windows, or **CxxDroid** on Android
 
 ### Compilation
 
@@ -54,8 +56,6 @@ gcc library.c -o library
 ```bash
 ./library
 ```
-
-> **Note:** On Android (Termux), the file is saved to `/sdcard/books.txt`. On other platforms, update the path in `add_book()` accordingly.
 
 ---
 
@@ -77,20 +77,48 @@ On launch, you'll see the main menu:
 Enter an option:
 ```
 
-Navigate by entering the number corresponding to your desired action and follow the on-screen prompts.
-
 ### Book Data Format (books.txt)
 
 Each book is stored as a pipe-delimited line:
 
 ```
-Book Name|Author|ISBN|RS. Price|Status
+Book Name|Author|ISBN|Price|Status
 ```
 
 **Example:**
 ```
-The Pragmatic Programmer|David Thomas|978-0135957059|RS. 799.00|available
-Clean Code|Robert C. Martin|978-0132350884|RS. 649.00|issued
+The Pragmatic Programmer|David Thomas|978-0135957059|799.00|available
+Clean Code|Robert C. Martin|978-0132350884|649.00|issued
+```
+
+---
+
+## ⚠️ Precautions
+
+This project was built and tested on **Android (CxxDroid)**. If you're running it on a different platform, keep the following in mind:
+
+### 1. Hardcoded File Path (Android-specific)
+All file operations use `/sdcard/books.txt` and `/sdcard/temp.txt`. This path is Android-specific and **will not work** on Windows, Linux, or macOS.
+
+**Fix:** Replace all occurrences of `/sdcard/books.txt` and `/sdcard/temp.txt` with a local path:
+```c
+// Windows
+ptr = fopen("C:\\books.txt", ...);
+
+// Linux / macOS
+ptr = fopen("books.txt", ...);
+```
+
+### 2. `system("cls")` — Windows/Android Only
+The `system("cls")` call clears the screen but only works on **Windows and CxxDroid (Android)**. On Linux or macOS it will do nothing or throw an error.
+
+**Fix:** Replace with:
+```c
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
 ```
 
 ---
@@ -100,30 +128,16 @@ Clean Code|Robert C. Martin|978-0132350884|RS. 649.00|issued
 ```
 .
 ├── library.c       # Main source file
-└── books.txt       # Auto-generated data file (created on first run)
+└── books.txt       # Auto-generated data file (created on first add)
 ```
 
 ---
 
-## ⚠️ Known Issues & Limitations
+## 🔮 Future Plans
 
-- **No persistent load on startup** — book data is written to `books.txt` but not read back when the program restarts. The in-memory `count` and struct array reset each session.
-- **Fixed array size** — the program uses a single global `struct books b` (not an array), which causes undefined behavior when accessing `b[i]`. Needs to be declared as `b[MAX]`.
-- **Hardcoded file path** — `/sdcard/books.txt` is Android-specific and must be changed for other platforms.
-- **`system("cls")`** — only works on Windows; use `system("clear")` on Linux/macOS.
-- **No input validation** — long inputs can overflow fixed-size character buffers.
-
----
-
-## 🔮 Future Improvements
-
-- [ ] Load books from file on startup for full persistence
-- [ ] Replace fixed-size array with dynamic memory allocation
-- [ ] Add a student/member management module
-- [ ] Due date tracking and fine calculation
-- [ ] Cross-platform screen clearing
-- [ ] Input sanitization and buffer overflow protection
-- [ ] Export reports to CSV
+- [ ] Student/Member management module
+- [ ] Due date tracking and fine calculation  
+- [ ] Separate membership tiers for **students** and **adults (18+)** with different borrowing rules and fine rates
 
 ---
 
@@ -133,4 +147,4 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ---
 
-> Made with ❤️ in C
+> Made with ❤️ in C by Adrish Datta | Built on Android 📱
